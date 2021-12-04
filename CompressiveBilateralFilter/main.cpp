@@ -32,8 +32,8 @@
 // assuming 8-bits dynamic range
 const double tone=256.0;
 
-const bool sw_imshow=true;
-const bool sw_imwrite=false;
+const bool sw_imshow=false;
+const bool sw_imwrite=true;
 
 double calc_psnr(const cv::Mat& image1,const cv::Mat& image2,double maxval)
 {
@@ -59,17 +59,19 @@ double calc_psnr(const cv::Mat& image1,const cv::Mat& image2,double maxval)
 	return snr;
 }
 
-template<typename T>
-void clip(cv::Mat& image,double minval=0.0,double maxval=255.0)
+// template<typename T>
+void clip(cv::Mat& image,double minval,double maxval)
 {
 	for(int y=0;y<image.rows;++y)
 	{
-		T* p=image.ptr<T>(y);
+		// T* p=image.ptr<T>(y);
+		double* p=image.ptr<double>(y);
 		for(int x=0;x<image.cols;++x)
 		{
 			for(int c=0;c<image.channels();++c)
 			{
-				const T value=*p;
+				// const T value=*p;
+				const double value=*p;
 				*p++=(value<minval)?minval:(maxval<value)?maxval:value;
 			}
 		}
@@ -124,8 +126,8 @@ int test_bilateral_filter(const std::string& pathS,double sigmaS,double sigmaR,d
 	cv::Mat dst0,dst1;
 	cv::merge(dstsp0,dst0);
 	cv::merge(dstsp1,dst1);
-//	clip(dst0); // for debug
-//	clip(dst1); // for debug
+	// clip(dst0, 0.0, 255.0); // for debug
+	// clip(dst1, 0.0, 255.0); // for debug
 
 	double psnr=calc_psnr(dst0,dst1,tone-1.0);
 	std::cerr<<cv::format("PSNR:  %f",psnr)<<std::endl;
@@ -140,8 +142,13 @@ int test_bilateral_filter(const std::string& pathS,double sigmaS,double sigmaR,d
 	}
 	if(sw_imwrite)
 	{
-		//cv::imwrite("../dst0.png",dst0*(tone-1.0));
-		//cv::imwrite("../dst1.png",dst1*(tone-1.0));
+		// cv::imwrite("output/dst0.png",dst0*(tone-1.0));
+		// cv::Mat visu;
+		// cv::normalize(dst1, visu, 0, 255, cv::NORM_MINMAX, CV_8U);
+		// cv::imwrite("output/dst0.png", visu);
+		cv::imwrite("output/dst0.png", dst0);
+		// cv::imwrite("output/dst1.png",dst1*(tone-1.0));
+		cv::imwrite("output/dst1.png",dst1);
 		//cv::imwrite("../error.png",(dst1-dst0)+tone/2.0);
 	}
 	return 0;
@@ -212,8 +219,8 @@ int test_crossjoint_bilateral_filter(const std::string& pathS,const std::string&
 	cv::Mat dst0,dst1;
 	cv::merge(dstsp0,dst0);
 	cv::merge(dstsp1,dst1);
-//	clip(dst0); // for debug
-//	clip(dst1); // for debug
+	// clip(dst0, 0.0, 255.0); // for debug
+	// clip(dst1, 0.0, 255.0); // for debug
 
 	double psnr=calc_psnr(dst0,dst1,tone-1.0);
 	std::cerr<<cv::format("PSNR:  %f",psnr)<<std::endl;
@@ -229,8 +236,8 @@ int test_crossjoint_bilateral_filter(const std::string& pathS,const std::string&
 	}
 	if(sw_imwrite)
 	{
-		//cv::imwrite("../dst0.png",dst0*(tone-1.0));
-		//cv::imwrite("../dst1.png",dst1*(tone-1.0));
+		cv::imwrite("output/dst0.png",dst0*(tone-1.0));
+		cv::imwrite("output/dst1.png",dst1*(tone-1.0));
 		//cv::imwrite("../error.png",(dst1-dst0)+tone/2.0);
 	}
 	return 0;
@@ -239,7 +246,7 @@ int test_crossjoint_bilateral_filter(const std::string& pathS,const std::string&
 int main(int argc,char** argv)
 {
 	// parameters of BF algorithms
-	const double sigmaS=2.0;
+	const double sigmaS=10.0;//2.0;
 	const double sigmaR=0.1*(tone-1.0);
 	const double tol=0.1; // for compressive BF
 	
