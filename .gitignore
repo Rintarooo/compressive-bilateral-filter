@@ -38,8 +38,8 @@ ipch
 
 # Others
 others
-*.png
 *.mexw32
 *.mexw64
 
 build/
+output/
