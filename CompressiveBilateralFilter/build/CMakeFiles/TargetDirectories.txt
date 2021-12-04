@@ -1,3 +1,0 @@
-/opt/coding/compressive-bilateral-filter/CompressiveBilateralFilter/build/CMakeFiles/rebuild_cache.dir
-/opt/coding/compressive-bilateral-filter/CompressiveBilateralFilter/build/CMakeFiles/edit_cache.dir
-/opt/coding/compressive-bilateral-filter/CompressiveBilateralFilter/build/CMakeFiles/main.dir

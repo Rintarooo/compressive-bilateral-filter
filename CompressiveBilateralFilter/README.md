@@ -1,0 +1,1 @@
+docker run -it --rm -v $HOME/coding/:/opt/coding -w /opt/coding codesignal/opencv:v9.4.0
