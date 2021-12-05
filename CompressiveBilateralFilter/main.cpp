@@ -12,22 +12,23 @@
 #include <vector>
 #include <cmath>
 #include <opencv2/opencv.hpp>
+// #include <opencv2/ximgproc/edge_filter.hpp>// jointbilateralfilter opencv
 #include "original_bilateral_filter.hpp"
 #include "compressive_bilateral_filter.hpp"
 
 #define CV_VERSION_NUMBER CVAUX_STR(CV_MAJOR_VERSION) CVAUX_STR(CV_MINOR_VERSION) CVAUX_STR(CV_SUBMINOR_VERSION)
 
-#ifdef _DEBUG
-#pragma comment(lib, "opencv_core"CV_VERSION_NUMBER"d.lib")
-#pragma comment(lib, "opencv_highgui"CV_VERSION_NUMBER"d.lib")
-#pragma comment(lib, "opencv_imgproc"CV_VERSION_NUMBER"d.lib")
-#pragma comment(lib, "opencv_contrib"CV_VERSION_NUMBER"d.lib")
-#else
-#pragma comment(lib, "opencv_core"CV_VERSION_NUMBER".lib")
-#pragma comment(lib, "opencv_highgui"CV_VERSION_NUMBER".lib")
-#pragma comment(lib, "opencv_imgproc"CV_VERSION_NUMBER".lib")
-#pragma comment(lib, "opencv_contrib"CV_VERSION_NUMBER".lib")
-#endif
+// #ifdef _DEBUG
+// #pragma comment(lib, "opencv_core"CV_VERSION_NUMBER"d.lib")
+// #pragma comment(lib, "opencv_highgui"CV_VERSION_NUMBER"d.lib")
+// #pragma comment(lib, "opencv_imgproc"CV_VERSION_NUMBER"d.lib")
+// #pragma comment(lib, "opencv_contrib"CV_VERSION_NUMBER"d.lib")
+// #else
+// #pragma comment(lib, "opencv_core"CV_VERSION_NUMBER".lib")
+// #pragma comment(lib, "opencv_highgui"CV_VERSION_NUMBER".lib")
+// #pragma comment(lib, "opencv_imgproc"CV_VERSION_NUMBER".lib")
+// #pragma comment(lib, "opencv_contrib"CV_VERSION_NUMBER".lib")
+// #endif
 
 // assuming 8-bits dynamic range
 const double tone=256.0;
@@ -59,19 +60,19 @@ double calc_psnr(const cv::Mat& image1,const cv::Mat& image2,double maxval)
 	return snr;
 }
 
-// template<typename T>
+template<typename T>
 void clip(cv::Mat& image,double minval,double maxval)
 {
 	for(int y=0;y<image.rows;++y)
 	{
-		// T* p=image.ptr<T>(y);
-		double* p=image.ptr<double>(y);
+		T* p=image.ptr<T>(y);
+		// double* p=image.ptr<double>(y);
 		for(int x=0;x<image.cols;++x)
 		{
 			for(int c=0;c<image.channels();++c)
 			{
-				// const T value=*p;
-				const double value=*p;
+				const T value=*p;
+				// const double value=*p;
 				*p++=(value<minval)?minval:(maxval<value)?maxval:value;
 			}
 		}
@@ -172,6 +173,11 @@ int test_crossjoint_bilateral_filter(const std::string& pathS,const std::string&
 	std::cerr<<"[Loaded Image]"<<std::endl;
 	std::cerr<<cv::format("Source: \"%s\"  # (w,h,ch)=(%d,%d,%d)",pathS.c_str(),imageS.cols,imageS.rows,imageS.channels())<<std::endl;
 	std::cerr<<cv::format("Guide:  \"%s\"  # (w,h,ch)=(%d,%d,%d)",pathG.c_str(),imageG.cols,imageG.rows,imageG.channels())<<std::endl;
+	if(imageS.channels() ==1 && imageG.channels() == 3)
+	{
+		std::cout << "convert Guide Image from RGB to Grayscale image" << std::endl;
+		cv::cvtColor(imageG, imageG, cv::COLOR_BGR2GRAY);
+	}
 	if(imageS.size()!=imageG.size() || imageS.channels()!=imageG.channels())
 	{
 		std::cerr<<"Source and guide images should share the same size and channels!"<<std::endl;
@@ -225,6 +231,16 @@ int test_crossjoint_bilateral_filter(const std::string& pathS,const std::string&
 	double psnr=calc_psnr(dst0,dst1,tone-1.0);
 	std::cerr<<cv::format("PSNR:  %f",psnr)<<std::endl;
 
+	/* // opencv jointbilateralfilter
+	cv::Mat dst2;
+	tm.start();
+	cv::ximgproc::jointBilateralFilter(guidsp[0], srcsp[0], dst2, -1, sigmaR, sigmaS);
+	tm.stop();
+	std::cerr<<cv::format("Compressive CJ-BF:  %7.1f [ms]",tm.getTimeMilli())<<std::endl;
+	tm.reset();
+	*/
+	
+
 	if(sw_imshow)
 	{
 		//cv::imshow("src",src);
@@ -236,8 +252,11 @@ int test_crossjoint_bilateral_filter(const std::string& pathS,const std::string&
 	}
 	if(sw_imwrite)
 	{
-		cv::imwrite("output/dst0.png",dst0*(tone-1.0));
-		cv::imwrite("output/dst1.png",dst1*(tone-1.0));
+		// cv::imwrite("output/dst0.png",dst0*(tone-1.0));
+		// cv::imwrite("output/dst1.png",dst1*(tone-1.0));
+		cv::imwrite("output/dst0.png",dst0);
+		cv::imwrite("output/dst1.png",dst1);
+		cv::imwrite("output/dst1.png",dst2);
 		//cv::imwrite("../error.png",(dst1-dst0)+tone/2.0);
 	}
 	return 0;
@@ -246,7 +265,7 @@ int test_crossjoint_bilateral_filter(const std::string& pathS,const std::string&
 int main(int argc,char** argv)
 {
 	// parameters of BF algorithms
-	const double sigmaS=10.0;//2.0;
+	const double sigmaS=2.0;//40.0;
 	const double sigmaR=0.1*(tone-1.0);
 	const double tol=0.1; // for compressive BF
 	
